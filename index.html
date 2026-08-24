@@ -1,0 +1,1955 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111111" />
+  <title>Kupim — Em breve</title>
+
+  <style>
+    :root {
+      --background: #111111;
+      --text: #ffffff;
+      --muted: #cfcfcf;
+      --gold: #d2a85a;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      overflow: hidden;
+      background: var(--background);
+    }
+
+    body {
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Arial, Helvetica, sans-serif;
+      background:
+        radial-gradient(
+          circle at 50% 50%,
+          rgba(210, 168, 90, 0.055),
+          transparent 32%
+        ),
+        var(--background);
+    }
+
+    .intro-ui {
+      position: fixed;
+      z-index: 3;
+      top: calc(50% - clamp(118px, 14vw, 178px));
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(92vw, 560px);
+      display: flex;
+      justify-content: center;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: clamp(0.78rem, 1.4vw, 1.05rem);
+      font-weight: 500;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .intro-actions {
+      position: fixed;
+      z-index: 3;
+      left: 50%;
+      bottom: max(28px, env(safe-area-inset-bottom));
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .intro-action {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 18px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 999px;
+      color: var(--text);
+      font: 700 0.68rem/1 Arial, Helvetica, sans-serif;
+      letter-spacing: 0.10em;
+      text-align: center;
+      text-decoration: none;
+      text-transform: uppercase;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, opacity 180ms ease, transform 180ms ease;
+    }
+
+    .intro-action:hover {
+      border-color: var(--gold);
+    }
+
+    .intro-action:active {
+      transform: scale(0.96);
+    }
+
+    .countdown-action {
+      min-width: 190px;
+      border-color: var(--gold);
+      background: var(--gold);
+      color: var(--background);
+    }
+
+    .countdown-action:hover {
+      background: #e1bd78;
+    }
+
+    .wait-action {
+      min-width: 112px;
+      background: rgba(17, 17, 17, 0.52);
+    }
+
+    .intro-actions.is-waiting .wait-action {
+      border-color: rgba(255, 255, 255, 0.18);
+      color: var(--muted);
+      cursor: default;
+      opacity: 0.72;
+    }
+
+    @media (max-width: 520px) {
+      .intro-ui {
+        top: calc(50% - 118px);
+      }
+
+      .intro-actions {
+        width: calc(100% - 32px);
+        bottom: max(20px, env(safe-area-inset-bottom));
+        gap: 8px;
+      }
+
+      .intro-action {
+        padding-inline: 12px;
+        font-size: 0.62rem;
+      }
+
+      .countdown-action {
+        min-width: 174px;
+      }
+
+    }
+
+    #logoCanvas {
+      position: fixed;
+      z-index: 2;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      pointer-events: none;
+      filter:
+        drop-shadow(0 0 6px rgba(255, 255, 255, 0.14))
+        drop-shadow(0 0 15px rgba(210, 168, 90, 0.12));
+      transition: filter 900ms cubic-bezier(0.4, 0, 0.2, 1), opacity 180ms ease-out;
+    }
+
+    body.logo-is-hovered #logoCanvas {
+      filter:
+        brightness(1.18)
+        drop-shadow(0 0 10px rgba(255, 255, 255, 0.28))
+        drop-shadow(0 0 28px rgba(210, 168, 90, 0.3));
+    }
+
+    .logo-hover-target {
+      position: fixed;
+      z-index: 5;
+      display: block;
+      pointer-events: auto;
+      cursor: none;
+      touch-action: none;
+      overscroll-behavior: contain;
+    }
+
+    body.logo-cube-active #logoCanvas {
+      opacity: 0;
+    }
+
+    .logo-cube-scene {
+      --cube-size: clamp(230px, 31vw, 360px);
+      position: fixed;
+      z-index: 4;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      perspective: 980px;
+      perspective-origin: 50% 50%;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 180ms ease-out, visibility 180ms linear;
+    }
+
+    body.logo-cube-active .logo-cube-scene {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .logo-cube {
+      position: relative;
+      width: var(--cube-size);
+      height: var(--cube-size);
+      transform-style: preserve-3d;
+      transform: translateZ(-180px) rotateX(0deg) rotateY(0deg) scale(1);
+      transition: transform 480ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      will-change: transform;
+    }
+
+    .logo-cube-scene.is-interacting .logo-cube {
+      transition: none;
+    }
+
+    .logo-cube-face {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      overflow: visible;
+      color: var(--face-color);
+      background: transparent;
+      border: 0;
+      box-shadow: none;
+      backface-visibility: hidden;
+      transform-style: preserve-3d;
+    }
+
+    .logo-cube-face.front { transform: translateZ(calc(var(--cube-size) / 2)); }
+    .logo-cube-face.back { transform: rotateY(180deg) translateZ(calc(var(--cube-size) / 2)); }
+    .logo-cube-face.right { transform: rotateY(90deg) translateZ(calc(var(--cube-size) / 2)); }
+    .logo-cube-face.left { transform: rotateY(-90deg) translateZ(calc(var(--cube-size) / 2)); }
+    .logo-cube-face.top { transform: rotateX(90deg) translateZ(calc(var(--cube-size) / 2)); }
+    .logo-cube-face.bottom { transform: rotateX(-90deg) translateZ(calc(var(--cube-size) / 2)); }
+
+    .cube-logo-stack {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 100%;
+      transform-style: preserve-3d;
+    }
+
+    .cube-logo {
+      grid-area: 1 / 1;
+      color: currentColor;
+      font: 700 var(--logo-3d-font-size, 72px)/1 Arial, Helvetica, sans-serif;
+      letter-spacing: 0;
+      word-spacing: -0.14em;
+      white-space: nowrap;
+      text-shadow: 0 0 22px currentColor;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .cube-logo::first-letter {
+      color: var(--plus-color);
+    }
+
+    .logo-cube-face.front .cube-logo {
+      color: #ffffff;
+      text-shadow: 0 0 9px rgba(255, 255, 255, 0.2);
+    }
+
+    .cube-logo.depth {
+      opacity: 0;
+      filter: blur(1px);
+      transition: opacity 260ms ease-out, transform 360ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    .logo-cube-scene.is-deep .cube-logo.depth-one {
+      opacity: 0.48;
+      transform: translate3d(-7px, 3px, 22px);
+    }
+
+    .logo-cube-scene.is-deep .cube-logo.depth-two {
+      opacity: 0.3;
+      transform: translate3d(8px, -4px, 42px);
+    }
+
+    .logo-cube-scene.is-deep .cube-logo.depth-three {
+      opacity: 0.18;
+      transform: translate3d(-13px, 6px, 64px);
+    }
+
+    .logo-cube-particles {
+      position: absolute;
+      z-index: 2;
+      left: 50%;
+      top: 50%;
+      width: min(82vw, 720px);
+      height: min(54vh, 420px);
+      transform: translate(-50%, -50%);
+      transform-style: preserve-3d;
+      opacity: 0;
+      filter: drop-shadow(0 0 10px rgba(210, 168, 90, 0.7));
+      transition: opacity 220ms ease-out;
+      will-change: opacity;
+    }
+
+    .logo-cube-particle {
+      position: absolute;
+      left: var(--particle-x);
+      top: var(--particle-y);
+      color: var(--particle-color);
+      font: 700 var(--particle-size)/1 Consolas, "Courier New", monospace;
+      opacity: var(--particle-opacity);
+      transform: translate3d(0, 0, var(--particle-depth));
+      animation: cubeParticleDrift var(--particle-duration) ease-in-out var(--particle-delay) infinite alternate;
+    }
+
+    @keyframes cubeParticleDrift {
+      from { translate: -4px 5px; }
+      to { translate: 7px -9px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .logo-cube-scene,
+      .logo-cube,
+      .cube-logo.depth,
+      .logo-cube-particles {
+        transition-duration: 1ms;
+      }
+
+      .logo-cube-particle {
+        animation: none;
+      }
+
+    }
+
+    .accessible-logo {
+      position: fixed;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="intro-ui">
+    <p class="status">Em breve</p>
+  </div>
+  <div class="intro-actions" data-intro-actions>
+    <a class="intro-action countdown-action" href="portfolio.html" data-countdown-link aria-label="Abrir o portfólio agora; redirecionamento automático em 10 segundos">
+      <span data-countdown-label aria-live="polite">Portfólio em 10s</span>
+    </a>
+    <button class="intro-action wait-action" type="button" data-wait-button aria-pressed="false">Espera...</button>
+  </div>
+  <span class="accessible-logo">+ Kupim</span>
+  <canvas id="logoCanvas" aria-hidden="true"></canvas>
+  <span class="logo-hover-target" data-logo-hover-target aria-hidden="true"></span>
+  <div class="logo-cube-scene" data-logo-cube-scene aria-hidden="true">
+    <div class="logo-cube-particles" data-logo-cube-particles></div>
+    <div class="logo-cube" data-logo-cube>
+      <div class="logo-cube-face front" style="--face-color: #ffffff; --plus-color: #d2a85a">
+        <div class="cube-logo-stack"><span class="cube-logo">+ Kupim</span><span class="cube-logo depth depth-one">+ Kupim</span><span class="cube-logo depth depth-two">+ Kupim</span><span class="cube-logo depth depth-three">+ Kupim</span></div>
+      </div>
+      <div class="logo-cube-face back" style="--face-color: #d97861; --plus-color: #58c7d4">
+        <div class="cube-logo-stack"><span class="cube-logo">+ Kupim</span><span class="cube-logo depth depth-one">+ Kupim</span><span class="cube-logo depth depth-two">+ Kupim</span><span class="cube-logo depth depth-three">+ Kupim</span></div>
+      </div>
+      <div class="logo-cube-face right" style="--face-color: #58c7d4; --plus-color: #d97861">
+        <div class="cube-logo-stack"><span class="cube-logo">+ Kupim</span><span class="cube-logo depth depth-one">+ Kupim</span><span class="cube-logo depth depth-two">+ Kupim</span><span class="cube-logo depth depth-three">+ Kupim</span></div>
+      </div>
+      <div class="logo-cube-face left" style="--face-color: #9a78d2; --plus-color: #91c66e">
+        <div class="cube-logo-stack"><span class="cube-logo">+ Kupim</span><span class="cube-logo depth depth-one">+ Kupim</span><span class="cube-logo depth depth-two">+ Kupim</span><span class="cube-logo depth depth-three">+ Kupim</span></div>
+      </div>
+      <div class="logo-cube-face top" style="--face-color: #f3eee3; --plus-color: #9a78d2">
+        <div class="cube-logo-stack"><span class="cube-logo">+ Kupim</span><span class="cube-logo depth depth-one">+ Kupim</span><span class="cube-logo depth depth-two">+ Kupim</span><span class="cube-logo depth depth-three">+ Kupim</span></div>
+      </div>
+      <div class="logo-cube-face bottom" style="--face-color: #91c66e; --plus-color: #f3eee3">
+        <div class="cube-logo-stack"><span class="cube-logo">+ Kupim</span><span class="cube-logo depth depth-one">+ Kupim</span><span class="cube-logo depth depth-two">+ Kupim</span><span class="cube-logo depth depth-three">+ Kupim</span></div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("logoCanvas");
+      const ctx = canvas.getContext("2d", { alpha: true });
+      const logoHoverTarget = document.querySelector("[data-logo-hover-target]");
+      const logoCubeScene = document.querySelector("[data-logo-cube-scene]");
+      const logoCube = document.querySelector("[data-logo-cube]");
+      const logoCubeParticles = document.querySelector("[data-logo-cube-particles]");
+      const preciseHover = window.matchMedia("(hover: hover) and (pointer: fine)");
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+      const maskCanvas = document.createElement("canvas");
+      const maskCtx = maskCanvas.getContext("2d", { alpha: true });
+
+      const COLORS = {
+        white: "#ffffff",
+        gold: "#d2a85a"
+      };
+
+      const FACE_LOGO_COLORS = {
+        front: {
+          plus: COLORS.gold,
+          name: COLORS.white,
+          plusShadow: "rgba(210, 168, 90, 0.24)",
+          nameShadow: "rgba(255, 255, 255, 0.18)"
+        },
+        back: {
+          plus: "#58c7d4",
+          name: "#d97861",
+          plusShadow: "rgba(88, 199, 212, 0.34)",
+          nameShadow: "rgba(217, 120, 97, 0.34)"
+        },
+        right: {
+          plus: "#d97861",
+          name: "#58c7d4",
+          plusShadow: "rgba(217, 120, 97, 0.34)",
+          nameShadow: "rgba(88, 199, 212, 0.34)"
+        },
+        left: {
+          plus: "#91c66e",
+          name: "#9a78d2",
+          plusShadow: "rgba(145, 198, 110, 0.34)",
+          nameShadow: "rgba(154, 120, 210, 0.34)"
+        },
+        top: {
+          plus: "#9a78d2",
+          name: "#f3eee3",
+          plusShadow: "rgba(154, 120, 210, 0.34)",
+          nameShadow: "rgba(243, 238, 227, 0.3)"
+        },
+        bottom: {
+          plus: "#f3eee3",
+          name: "#91c66e",
+          plusShadow: "rgba(243, 238, 227, 0.3)",
+          nameShadow: "rgba(145, 198, 110, 0.34)"
+        }
+      };
+
+      /*
+        CICLO:
+        1. 20s — + Kupim parado, normal.
+        2. 10s — glitch pequeno e sutil.
+        3. 10s — glitch maior e mais perceptível.
+        4. 10s — transição para binário:
+                  o texto desaparece durante 10s;
+                  os números ganham opacidade durante 9s.
+        5. 5s  — os números caem e ultrapassam a tela.
+        6. 10s — tela vazia.
+        7. 20s — números entram pela direita e ocupam
+                  posições aleatórias da palavra.
+        8. 1s  — consolidação final e reinício.
+      */
+      const TIMING = {
+        idle: 20000,
+        glitchSmall: 10000,
+        glitchLarge: 10000,
+        transform: 10000,
+        fall: 5000,
+        blank: 10000,
+        rebuild: 20000,
+        settle: 1000
+      };
+
+      let width = 0;
+      let height = 0;
+      let dpr = 1;
+      let fontSize = 120;
+      let particles = [];
+      let cycleStart = performance.now();
+      let hoverPulseStart = Number.NEGATIVE_INFINITY;
+      let logoIsHovered = false;
+      let hoverStains = [];
+      let lastHoverStainAt = Number.NEGATIVE_INFINITY;
+      const cubePointers = new Map();
+      let cubeRotationX = 0;
+      let cubeRotationY = 0;
+      let cubeZoom = 0;
+      let cubeSize = 360;
+      let activeLogoFace = "front";
+      let cubeGestureStart = null;
+      let cubeGestureActive = false;
+      let cubeGestureMoved = false;
+      let cubeSettleTimer = 0;
+      let cubeResetTimer = 0;
+      let cubeWheelTimer = 0;
+      let suppressLogoClickUntil = Number.NEGATIVE_INFINITY;
+      const HOVER_PULSE_DURATION = 460;
+      const HOVER_PULSE_INTERVAL = 1500;
+      const HOVER_STAIN_LIFETIME = 1500;
+      const HOVER_STAIN_INTERVAL = 24;
+      const CLICK_ADVANCE_MS = 500;
+
+      function clamp(value, min = 0, max = 1) {
+        return Math.min(max, Math.max(min, value));
+      }
+
+      function lerp(a, b, amount) {
+        return a + (b - a) * amount;
+      }
+
+      function easeInCubic(value) {
+        return value * value * value;
+      }
+
+      function easeOutCubic(value) {
+        return 1 - Math.pow(1 - value, 3);
+      }
+
+      function easeInOutCubic(value) {
+        return value < 0.5
+          ? 4 * value * value * value
+          : 1 - Math.pow(-2 * value + 2, 3) / 2;
+      }
+
+      function buildCubeParticles() {
+        const fragment = document.createDocumentFragment();
+        const colors = [
+          "#d2a85a",
+          "#58c7d4",
+          "#d97861",
+          "#9a78d2",
+          "#f3eee3",
+          "#91c66e"
+        ];
+
+        for (let index = 0; index < 52; index += 1) {
+          const particle = document.createElement("span");
+          particle.className = "logo-cube-particle";
+          particle.textContent = Math.random() > 0.5 ? "1" : "0";
+          particle.style.setProperty("--particle-x", `${5 + Math.random() * 90}%`);
+          particle.style.setProperty("--particle-y", `${8 + Math.random() * 84}%`);
+          particle.style.setProperty(
+            "--particle-color",
+            colors[index % colors.length]
+          );
+          particle.style.setProperty(
+            "--particle-size",
+            `${10 + Math.random() * 13}px`
+          );
+          particle.style.setProperty(
+            "--particle-opacity",
+            `${0.34 + Math.random() * 0.6}`
+          );
+          particle.style.setProperty(
+            "--particle-depth",
+            `${30 + Math.random() * 150}px`
+          );
+          particle.style.setProperty(
+            "--particle-duration",
+            `${1.4 + Math.random() * 1.9}s`
+          );
+          particle.style.setProperty(
+            "--particle-delay",
+            `${Math.random() * -2.4}s`
+          );
+          fragment.appendChild(particle);
+        }
+
+        logoCubeParticles.replaceChildren(fragment);
+      }
+
+      function updateCubeTransform() {
+        const scale = 1 + cubeZoom * 0.9;
+        const translateZ = -cubeSize / 2 + cubeZoom * 190;
+        const binaryOpacity = clamp((cubeZoom - 0.34) / 0.66);
+
+        logoCube.style.transform =
+          `translateZ(${translateZ}px) ` +
+          `rotateX(${cubeRotationX}deg) ` +
+          `rotateY(${cubeRotationY}deg) ` +
+          `scale(${scale})`;
+        logoCubeParticles.style.opacity = `${binaryOpacity * 0.92}`;
+        logoCubeScene.classList.toggle("is-deep", cubeZoom > 0.38);
+      }
+
+      function getVisibleCubeFace() {
+        const rotationX = cubeRotationX * Math.PI / 180;
+        const rotationY = cubeRotationY * Math.PI / 180;
+        const cosX = Math.cos(rotationX);
+        const sinX = Math.sin(rotationX);
+        const cosY = Math.cos(rotationY);
+        const sinY = Math.sin(rotationY);
+        const faces = [
+          { name: "front", normal: [0, 0, 1] },
+          { name: "back", normal: [0, 0, -1] },
+          { name: "right", normal: [1, 0, 0] },
+          { name: "left", normal: [-1, 0, 0] },
+          { name: "top", normal: [0, -1, 0] },
+          { name: "bottom", normal: [0, 1, 0] }
+        ];
+
+        return faces.reduce((visible, face) => {
+          const [normalX, normalY, normalZ] = face.normal;
+          const rotatedY = normalY;
+          const rotatedZ = -normalX * sinY + normalZ * cosY;
+          const finalZ = rotatedY * sinX + rotatedZ * cosX;
+
+          return finalZ > visible.z
+            ? { name: face.name, z: finalZ }
+            : visible;
+        }, { name: "front", z: Number.NEGATIVE_INFINITY }).name;
+      }
+
+      function selectVisibleLogoFace() {
+        const nextFace = getVisibleCubeFace();
+
+        if (nextFace === activeLogoFace) {
+          return;
+        }
+
+        activeLogoFace = nextFace;
+        buildParticles();
+      }
+
+      function activateCubeInteraction() {
+        window.clearTimeout(cubeSettleTimer);
+        window.clearTimeout(cubeResetTimer);
+        document.body.classList.add("logo-cube-active");
+        logoCubeScene.classList.add("is-interacting");
+      }
+
+      function finishCubeInteraction() {
+        cubeGestureActive = false;
+        cubeGestureStart = null;
+
+        if (!document.body.classList.contains("logo-cube-active")) {
+          return;
+        }
+
+        cubeRotationX = Math.round(cubeRotationX / 90) * 90;
+        cubeRotationY = Math.round(cubeRotationY / 90) * 90;
+        cubeZoom = cubeZoom > 0.58 ? 0.82 : 0;
+        selectVisibleLogoFace();
+        if (cubeGestureMoved) {
+          suppressLogoClickUntil = performance.now() + 600;
+        }
+        logoCubeScene.classList.remove("is-interacting");
+        updateCubeTransform();
+
+        cubeSettleTimer = window.setTimeout(() => {
+          document.body.classList.remove("logo-cube-active");
+          logoCubeParticles.style.opacity = "0";
+          logoCubeScene.classList.remove("is-deep");
+
+          cubeResetTimer = window.setTimeout(() => {
+            cubeZoom = 0;
+            updateCubeTransform();
+          }, 220);
+        }, cubeZoom > 0 ? 1150 : 760);
+      }
+
+      function beginCubeGesture(pointerType) {
+        const points = Array.from(cubePointers.values());
+
+        if (pointerType === "touch" && points.length < 2) {
+          return;
+        }
+
+        const first = points[0];
+        const second = pointerType === "touch" ? points[1] : null;
+        const centerX = second ? (first.x + second.x) / 2 : first.x;
+        const centerY = second ? (first.y + second.y) / 2 : first.y;
+        const distance = second
+          ? Math.hypot(second.x - first.x, second.y - first.y)
+          : 0;
+
+        cubeGestureActive = true;
+        cubeGestureMoved = pointerType === "touch";
+        cubeGestureStart = {
+          pointerType,
+          centerX,
+          centerY,
+          distance: Math.max(1, distance),
+          rotationX: cubeRotationX,
+          rotationY: cubeRotationY,
+          zoom: cubeZoom
+        };
+        if (pointerType === "touch") {
+          activateCubeInteraction();
+          updateCubeTransform();
+        }
+      }
+
+      function updateCubeGesture() {
+        if (!cubeGestureActive || !cubeGestureStart) {
+          return;
+        }
+
+        const points = Array.from(cubePointers.values());
+
+        if (cubeGestureStart.pointerType === "touch") {
+          if (points.length < 2) {
+            return;
+          }
+
+          const first = points[0];
+          const second = points[1];
+          const centerX = (first.x + second.x) / 2;
+          const centerY = (first.y + second.y) / 2;
+          const distance = Math.hypot(
+            second.x - first.x,
+            second.y - first.y
+          );
+          const deltaX = centerX - cubeGestureStart.centerX;
+          const deltaY = centerY - cubeGestureStart.centerY;
+          const pinchRatio = distance / cubeGestureStart.distance;
+
+          cubeRotationY = cubeGestureStart.rotationY + deltaX * 0.46;
+          cubeRotationX = cubeGestureStart.rotationX - deltaY * 0.46;
+          cubeZoom = clamp(
+            cubeGestureStart.zoom + Math.log(Math.max(0.2, pinchRatio)) * 1.32
+          );
+
+          if (
+            Math.abs(deltaX) > 3 ||
+            Math.abs(deltaY) > 3 ||
+            Math.abs(distance - cubeGestureStart.distance) > 3
+          ) {
+            cubeGestureMoved = true;
+            suppressLogoClickUntil = performance.now() + 600;
+          }
+        } else {
+          const point = points[0];
+
+          if (!point) {
+            return;
+          }
+
+          const deltaX = point.x - cubeGestureStart.centerX;
+          const deltaY = point.y - cubeGestureStart.centerY;
+          cubeRotationY = cubeGestureStart.rotationY + deltaX * 0.46;
+          cubeRotationX = cubeGestureStart.rotationX - deltaY * 0.46;
+
+          if (Math.abs(deltaX) > 3 || Math.abs(deltaY) > 3) {
+            if (!cubeGestureMoved) {
+              activateCubeInteraction();
+            }
+            cubeGestureMoved = true;
+            suppressLogoClickUntil = performance.now() + 600;
+          }
+        }
+
+        updateCubeTransform();
+      }
+
+      function configureCanvas() {
+        width = Math.max(1, window.innerWidth);
+        height = Math.max(1, window.innerHeight);
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        canvas.width = Math.round(width * dpr);
+        canvas.height = Math.round(height * dpr);
+        canvas.style.width = `${width}px`;
+        canvas.style.height = `${height}px`;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        maskCanvas.width = canvas.width;
+        maskCanvas.height = canvas.height;
+        maskCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+        /*
+          A palavra fica centralizada horizontalmente,
+          mas com o centro vertical em 25% da altura:
+          metade da região entre o topo e o centro da tela.
+        */
+        fontSize = Math.min(width * 0.15, height * 0.16, 150);
+        hoverStains = [];
+
+        buildParticles();
+        positionLogoHoverTarget();
+        updateCubeTransform();
+      }
+
+      function fontDeclaration() {
+        return `700 ${fontSize}px Arial, Helvetica, sans-serif`;
+      }
+
+      function getTextLayout(context) {
+        context.font = fontDeclaration();
+        context.textBaseline = "middle";
+
+        const plusText = "+";
+        const nameText = "Kupim";
+        const gap = fontSize * 0.14;
+        const plusWidth = context.measureText(plusText).width;
+        const nameWidth = context.measureText(nameText).width;
+        const totalWidth = plusWidth + gap + nameWidth;
+
+        return {
+          plusText,
+          nameText,
+          gap,
+          plusWidth,
+          totalWidth,
+          startX: width / 2 - totalWidth / 2,
+          centerY: height * 0.5
+        };
+      }
+
+      function positionLogoHoverTarget() {
+        const layout = getTextLayout(ctx);
+        const horizontalPadding = preciseHover.matches
+          ? fontSize * 0.16
+          : Math.max(64, fontSize * 0.75);
+        const verticalPadding = preciseHover.matches
+          ? fontSize * 0.18
+          : Math.max(70, fontSize * 0.78);
+
+        cubeSize = Math.max(
+          layout.totalWidth + fontSize * 0.48,
+          fontSize * 2.65
+        );
+        logoCubeScene.style.setProperty("--cube-size", `${cubeSize}px`);
+        logoCubeScene.style.setProperty(
+          "--logo-3d-font-size",
+          `${fontSize}px`
+        );
+
+        logoHoverTarget.style.left = `${layout.startX - horizontalPadding}px`;
+        logoHoverTarget.style.top = `${layout.centerY - fontSize * 0.5 - verticalPadding}px`;
+        logoHoverTarget.style.width = `${layout.totalWidth + horizontalPadding * 2}px`;
+        logoHoverTarget.style.height = `${fontSize + verticalPadding * 2}px`;
+        logoHoverTarget.style.display = "block";
+      }
+
+      function renderLogoTo(
+        context,
+        xOffset = 0,
+        yOffset = 0,
+        alpha = 1
+      ) {
+        const layout = getTextLayout(context);
+        const palette = FACE_LOGO_COLORS[activeLogoFace];
+
+        context.save();
+        context.globalAlpha = alpha;
+        context.font = fontDeclaration();
+        context.textBaseline = "middle";
+
+        context.fillStyle = palette.plus;
+        context.shadowBlur = 10;
+        context.shadowColor = palette.plusShadow;
+        context.fillText(
+          layout.plusText,
+          layout.startX + xOffset,
+          layout.centerY + yOffset
+        );
+
+        context.fillStyle = palette.name;
+        context.shadowBlur = 7;
+        context.shadowColor = palette.nameShadow;
+        context.fillText(
+          layout.nameText,
+          layout.startX + layout.plusWidth + layout.gap + xOffset,
+          layout.centerY + yOffset
+        );
+
+        context.restore();
+      }
+
+      function drawMask() {
+        maskCtx.clearRect(0, 0, width, height);
+        renderLogoTo(maskCtx, 0, 0, 1);
+      }
+
+      function addHoverStain(event, force = false) {
+        const now = performance.now();
+
+        if (!force && now - lastHoverStainAt < HOVER_STAIN_INTERVAL) {
+          return;
+        }
+
+        const stain = {
+          x: event.clientX,
+          y: event.clientY,
+          born: now
+        };
+
+        if (reducedMotion.matches) {
+          hoverStains = [stain];
+        } else {
+          hoverStains.push(stain);
+          hoverStains = hoverStains.slice(-36);
+        }
+
+        lastHoverStainAt = now;
+      }
+
+      function renderHoverStains(time) {
+        hoverStains = hoverStains.filter(
+          stain => time - stain.born < HOVER_STAIN_LIFETIME
+        );
+
+        if (hoverStains.length === 0) {
+          return;
+        }
+
+        const layout = getTextLayout(ctx);
+
+        hoverStains.forEach(stain => {
+          const progress = clamp(
+            (time - stain.born) / HOVER_STAIN_LIFETIME
+          );
+          const opacity = Math.pow(1 - progress, 1.35);
+          const radius = fontSize * (0.5 + progress * 0.32);
+          const gradient = ctx.createRadialGradient(
+            stain.x,
+            stain.y,
+            0,
+            stain.x,
+            stain.y,
+            radius
+          );
+
+          gradient.addColorStop(0, COLORS.gold);
+          gradient.addColorStop(0.38, "rgba(210, 168, 90, 0.98)");
+          gradient.addColorStop(0.72, "rgba(210, 168, 90, 0.62)");
+          gradient.addColorStop(1, "rgba(210, 168, 90, 0)");
+
+          ctx.save();
+          ctx.globalAlpha = opacity;
+          ctx.font = fontDeclaration();
+          ctx.textBaseline = "middle";
+          ctx.fillStyle = gradient;
+          ctx.shadowBlur = 30 * opacity;
+          ctx.shadowColor = "rgba(210, 168, 90, 0.82)";
+          ctx.fillText(
+            layout.plusText,
+            layout.startX,
+            layout.centerY
+          );
+          ctx.fillText(
+            layout.nameText,
+            layout.startX + layout.plusWidth + layout.gap,
+            layout.centerY
+          );
+          ctx.restore();
+        });
+      }
+
+      function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i -= 1) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+      }
+
+      function buildParticles() {
+        drawMask();
+
+        const layout = getTextLayout(maskCtx);
+        const palette = FACE_LOGO_COLORS[activeLogoFace];
+
+        const image = maskCtx.getImageData(
+          0,
+          0,
+          maskCanvas.width,
+          maskCanvas.height
+        );
+
+        const step = Math.max(5, Math.round(fontSize / 16));
+        const generated = [];
+
+        for (let y = 0; y < height; y += step) {
+          for (let x = 0; x < width; x += step) {
+            const px = Math.min(
+              maskCanvas.width - 1,
+              Math.floor(x * dpr)
+            );
+            const py = Math.min(
+              maskCanvas.height - 1,
+              Math.floor(y * dpr)
+            );
+            const index = (py * maskCanvas.width + px) * 4;
+
+            const alpha = image.data[index + 3];
+
+            if (alpha <= 70) {
+              continue;
+            }
+
+            const isPlusRegion =
+              x < layout.startX + layout.plusWidth + layout.gap * 0.5;
+
+            generated.push({
+              targetX: x,
+              targetY: y,
+
+              fallX:
+                x +
+                (Math.random() - 0.5) *
+                  Math.max(90, width * 0.12),
+
+              /*
+                Todos ultrapassam a borda inferior da janela.
+              */
+              fallY:
+                height +
+                120 +
+                Math.random() *
+                  Math.max(220, height * 0.45),
+
+              /*
+                Na reconstrução, os números só entram
+                pelo lado direito.
+              */
+              enterX:
+                width +
+                40 +
+                Math.random() * 180,
+
+              enterY:
+                Math.random() * height,
+
+              glyph:
+                Math.random() > 0.5 ? "1" : "0",
+
+              color: isPlusRegion ? palette.plus : palette.name,
+
+              size:
+                Math.max(
+                  8,
+                  step * (0.9 + Math.random() * 0.36)
+                ),
+
+              rotation:
+                (Math.random() - 0.5) * 0.9,
+
+              spin:
+                (Math.random() - 0.5) * 0.035,
+
+              appearDelay:
+                Math.random() * 0.72,
+
+              fallDelay:
+                Math.random() * 0.24,
+
+              travelDuration:
+                1100 + Math.random() * 1500
+            });
+          }
+        }
+
+        /*
+          A ordem da reconstrução é totalmente aleatória.
+          Assim, os números se encaixam em pontos diferentes,
+          sem formar a palavra da esquerda para a direita.
+        */
+        const randomOrder = shuffle(
+          generated.map((_, index) => index)
+        );
+
+        let accumulatedRhythm = 0;
+        const rhythm = randomOrder.map(() => {
+          accumulatedRhythm +=
+            0.65 + Math.random() * 0.8;
+          return accumulatedRhythm;
+        });
+
+        randomOrder.forEach((particleIndex, orderIndex) => {
+          generated[particleIndex].spawnRatio =
+            rhythm[orderIndex] /
+            Math.max(accumulatedRhythm, 1);
+        });
+
+        particles = generated;
+      }
+
+      function drawBinaryParticle(
+        particle,
+        x,
+        y,
+        alpha,
+        rotation = 0
+      ) {
+        if (alpha <= 0) {
+          return;
+        }
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
+        ctx.font =
+          `700 ${particle.size}px "Courier New", monospace`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillStyle = particle.color;
+        ctx.shadowBlur = 5;
+        ctx.shadowColor = particle.color;
+        ctx.fillText(particle.glyph, 0, 0);
+        ctx.restore();
+      }
+
+      function getStaticOffset(time, strength = 1) {
+        return {
+          x:
+            Math.sin(time * 0.021) *
+              0.38 *
+              strength +
+            (Math.random() - 0.5) *
+              0.72 *
+              strength,
+
+          y:
+            Math.cos(time * 0.017) *
+              0.22 *
+              strength +
+            (Math.random() - 0.5) *
+              0.52 *
+              strength
+        };
+      }
+
+      /*
+        FASE 1:
+        + Kupim parado, normal e sem qualquer efeito.
+      */
+      function renderIdle() {
+        ctx.clearRect(0, 0, width, height);
+        renderLogoTo(ctx, 0, 0, 1);
+      }
+
+      /*
+        FASE 2:
+        Glitch pequeno durante 10 segundos.
+      */
+      function renderGlitchSmall(time) {
+        ctx.clearRect(0, 0, width, height);
+
+        const offset = getStaticOffset(time, 0.8);
+
+        // Ghosting sutil: duas cópias translúcidas se afastam e retornam.
+        const ghostPhase = time * 0.0045;
+        const ghostX = Math.sin(ghostPhase) * 2.4;
+        const ghostY = Math.cos(ghostPhase * 0.7) * 0.8;
+
+        ctx.save();
+        ctx.globalAlpha = 0.12;
+        renderLogoTo(ctx, ghostX, ghostY, 1);
+        renderLogoTo(ctx, -ghostX * 0.7, -ghostY, 1);
+        ctx.restore();
+
+        renderLogoTo(ctx, offset.x, offset.y, 1);
+
+        if (Math.random() < 0.16) {
+          const sliceCount = Math.random() < 0.75 ? 1 : 2;
+
+          maskCtx.clearRect(0, 0, width, height);
+          renderLogoTo(maskCtx, 0, 0, 1);
+
+          for (let i = 0; i < sliceCount; i += 1) {
+            const sliceY =
+              height * 0.5 +
+              (Math.random() - 0.5) *
+                fontSize * 0.9;
+
+            const sliceHeight =
+              1 + Math.random() * 2.2;
+
+            const shift =
+              (Math.random() - 0.5) * 3.5;
+
+            ctx.drawImage(
+              maskCanvas,
+              0,
+              sliceY * dpr,
+              maskCanvas.width,
+              sliceHeight * dpr,
+              shift,
+              sliceY,
+              width,
+              sliceHeight
+            );
+          }
+        }
+      }
+
+      function renderHoverPulse(time) {
+        if (!logoIsHovered) {
+          return;
+        }
+
+        const pulseElapsed = (time - hoverPulseStart) % HOVER_PULSE_INTERVAL;
+
+        if (pulseElapsed >= HOVER_PULSE_DURATION) {
+          renderLogoTo(ctx, 0, 0, 0.055);
+          return;
+        }
+
+        const progress = clamp(pulseElapsed / HOVER_PULSE_DURATION);
+        const envelope = Math.sin(easeInOutCubic(progress) * Math.PI);
+
+        if (reducedMotion.matches) {
+          renderLogoTo(ctx, 0, 0, 0.055 + 0.08 * envelope);
+          return;
+        }
+
+        const displacement = 9 * envelope;
+
+        ctx.save();
+        ctx.globalAlpha = 0.24 * envelope;
+        renderLogoTo(ctx, displacement, 0, 1);
+        renderLogoTo(ctx, -displacement, 0, 1);
+        ctx.restore();
+
+        renderLogoTo(ctx, 0, 0, 0.055 + 0.14 * envelope);
+        drawMask();
+
+        const layout = getTextLayout(ctx);
+        const slices = [
+          { y: layout.centerY - fontSize * 0.2, height: 4, direction: 1 },
+          { y: layout.centerY + fontSize * 0.18, height: 6, direction: -1 }
+        ];
+
+        slices.forEach(slice => {
+          ctx.save();
+          ctx.globalAlpha = 0.72 * envelope;
+          ctx.drawImage(
+            maskCanvas,
+            0,
+            slice.y * dpr,
+            maskCanvas.width,
+            slice.height * dpr,
+            slice.direction * 10 * envelope,
+            slice.y,
+            width,
+            slice.height
+          );
+          ctx.restore();
+        });
+
+      }
+
+      /*
+        FASE 3:
+        Glitch maior durante 10 segundos.
+      */
+      function renderGlitchLarge(time, progress) {
+        ctx.clearRect(0, 0, width, height);
+
+        const intensity =
+          1.7 + Math.sin(progress * Math.PI * 4) * 0.3;
+
+        const offset = getStaticOffset(time, intensity);
+
+        // Ghosting mais forte, com múltiplas cópias desalinhadas.
+        const ghostPhase = time * 0.006;
+        const ghostX = Math.sin(ghostPhase) * (5 + progress * 5);
+        const ghostY = Math.cos(ghostPhase * 0.65) * (1.5 + progress * 1.8);
+
+        ctx.save();
+        ctx.globalAlpha = 0.16;
+        renderLogoTo(ctx, ghostX, ghostY, 1);
+        renderLogoTo(ctx, -ghostX * 0.8, -ghostY * 0.7, 1);
+        renderLogoTo(ctx, ghostX * 0.35, -ghostY * 1.2, 1);
+        ctx.restore();
+
+        renderLogoTo(ctx, offset.x, offset.y, 1);
+
+        maskCtx.clearRect(0, 0, width, height);
+        renderLogoTo(maskCtx, 0, 0, 1);
+
+        const sliceCount =
+          3 + Math.floor(Math.random() * 5);
+
+        for (let i = 0; i < sliceCount; i += 1) {
+          const sliceY =
+            height * 0.5 +
+            (Math.random() - 0.5) *
+              fontSize * 1.05;
+
+          const sliceHeight =
+            1.5 + Math.random() * 5.5;
+
+          const shift =
+            (Math.random() - 0.5) *
+            (7 + progress * 9);
+
+          ctx.drawImage(
+            maskCanvas,
+            0,
+            sliceY * dpr,
+            maskCanvas.width,
+            sliceHeight * dpr,
+            shift,
+            sliceY,
+            width,
+            sliceHeight
+          );
+        }
+
+        if (Math.random() < 0.22) {
+          ctx.save();
+          ctx.globalAlpha = 0.12 + Math.random() * 0.12;
+          renderLogoTo(
+            ctx,
+            (Math.random() - 0.5) * 8,
+            (Math.random() - 0.5) * 2,
+            1
+          );
+          ctx.restore();
+        }
+      }
+
+      /*
+        FASE 4:
+        - o texto continua tremendo;
+        - os números aparecem gradualmente em 9s;
+        - o texto desaparece gradualmente em 10s.
+      */
+      function renderTransform(progress, time) {
+        ctx.clearRect(0, 0, width, height);
+
+        const elapsed = progress * TIMING.transform;
+        const textAlpha = clamp(1 - elapsed / 10000);
+
+        /*
+          Durante estes 10 segundos, todos os efeitos
+          diminuem gradualmente até desaparecerem.
+        */
+        const effectStrength = easeInOutCubic(1 - progress);
+        const offset = getStaticOffset(
+          time,
+          1.25 * effectStrength
+        );
+
+        const ghostPhase = time * 0.0065;
+        const ghostDistance = 10 * effectStrength;
+        const ghostX =
+          Math.sin(ghostPhase) * ghostDistance;
+        const ghostY =
+          Math.cos(ghostPhase * 0.72) *
+          3 * effectStrength;
+
+        if (textAlpha > 0) {
+          if (effectStrength > 0.001) {
+            ctx.save();
+            ctx.globalAlpha =
+              textAlpha * 0.22 * effectStrength;
+
+            renderLogoTo(
+              ctx,
+              ghostX,
+              ghostY,
+              1
+            );
+
+            renderLogoTo(
+              ctx,
+              -ghostX * 0.75,
+              -ghostY,
+              1
+            );
+
+            ctx.restore();
+          }
+
+          renderLogoTo(
+            ctx,
+            offset.x,
+            offset.y,
+            textAlpha
+          );
+        }
+
+        /*
+          Os 0 e 1 alcançam a opacidade total em 9 segundos.
+        */
+        particles.forEach((particle) => {
+          const appearProgress =
+            clamp(elapsed / 9000);
+
+          const local = clamp(
+            (
+              appearProgress -
+              particle.appearDelay * 0.42
+            ) / 0.58
+          );
+
+          const alpha =
+            easeInOutCubic(local);
+
+          drawBinaryParticle(
+            particle,
+            particle.targetX + offset.x,
+            particle.targetY + offset.y,
+            alpha,
+            particle.rotation *
+              (1 - local) *
+              effectStrength
+          );
+        });
+
+        /*
+          Os cortes de glitch ficam progressivamente menores,
+          menos numerosos e menos deslocados até zerarem.
+        */
+        if (
+          textAlpha > 0 &&
+          effectStrength > 0.015
+        ) {
+          maskCtx.clearRect(0, 0, width, height);
+          renderLogoTo(
+            maskCtx,
+            0,
+            0,
+            textAlpha
+          );
+
+          const sliceCount =
+            Math.max(
+              0,
+              Math.round(9 * effectStrength)
+            );
+
+          for (let i = 0; i < sliceCount; i += 1) {
+            const sliceY =
+              height * 0.5 +
+              (Math.random() - 0.5) *
+                fontSize *
+                (0.75 + 0.3 * effectStrength);
+
+            const sliceHeight =
+              1 +
+              Math.random() *
+                (1 + 5 * effectStrength);
+
+            const shift =
+              (Math.random() - 0.5) *
+              17 *
+              effectStrength;
+
+            ctx.save();
+            ctx.globalAlpha =
+              0.25 + 0.75 * effectStrength;
+
+            ctx.drawImage(
+              maskCanvas,
+              0,
+              sliceY * dpr,
+              maskCanvas.width,
+              sliceHeight * dpr,
+              shift,
+              sliceY,
+              width,
+              sliceHeight
+            );
+
+            ctx.restore();
+          }
+        }
+      }
+
+      function renderFall(progress) {
+        ctx.clearRect(0, 0, width, height);
+
+        particles.forEach((particle) => {
+          const local = clamp(
+            (
+              progress -
+              particle.fallDelay
+            ) /
+            (1 - particle.fallDelay)
+          );
+
+          const eased =
+            easeInCubic(local);
+
+          const x = lerp(
+            particle.targetX,
+            particle.fallX,
+            eased
+          );
+
+          const y = lerp(
+            particle.targetY,
+            particle.fallY,
+            eased
+          );
+
+          const alpha =
+            clamp(
+              1 -
+              Math.max(0, local - 0.96) / 0.04
+            );
+
+          drawBinaryParticle(
+            particle,
+            x,
+            y,
+            alpha,
+            particle.rotation +
+              eased * particle.spin * 100
+          );
+        });
+      }
+
+      /*
+        FASE 3:
+        Tela vazia durante 10 segundos.
+      */
+      function renderBlank() {
+        ctx.clearRect(0, 0, width, height);
+      }
+
+      /*
+        FASE 4:
+        - 20 segundos;
+        - entrada pela direita;
+        - um número de cada vez;
+        - posições preenchidas em ordem aleatória.
+      */
+      function renderRebuild(progress) {
+        ctx.clearRect(0, 0, width, height);
+
+        const elapsed =
+          progress * TIMING.rebuild;
+
+        /*
+          Os números continuam entrando até 90%
+          da duração total. Os 10% finais consolidam
+          a forma e restauram o texto original.
+        */
+        const spawnWindow =
+          TIMING.rebuild * 0.9;
+
+        particles.forEach((particle) => {
+          const spawnAt =
+            particle.spawnRatio * spawnWindow;
+
+          const local = clamp(
+            (
+              elapsed -
+              spawnAt
+            ) /
+            particle.travelDuration
+          );
+
+          if (local <= 0) {
+            return;
+          }
+
+          const eased =
+            easeOutCubic(local);
+
+          const x = lerp(
+            particle.enterX,
+            particle.targetX,
+            eased
+          );
+
+          const y = lerp(
+            particle.enterY,
+            particle.targetY,
+            easeInOutCubic(eased)
+          );
+
+          /*
+            Pequena curva para evitar trajetória
+            perfeitamente reta e mecânica.
+          */
+          const arc =
+            Math.sin(eased * Math.PI) *
+            (particle.enterY - particle.targetY) *
+            0.08;
+
+          let alpha =
+            clamp(local / 0.08);
+
+          if (progress > 0.92) {
+            alpha *= clamp(
+              1 -
+              (progress - 0.92) / 0.08
+            );
+          }
+
+          drawBinaryParticle(
+            particle,
+            x,
+            y - arc,
+            alpha,
+            particle.rotation * (1 - eased)
+          );
+        });
+
+        /*
+          O texto original só aparece no final,
+          quando os binários já formaram a palavra.
+        */
+        const consolidation =
+          clamp(
+            (progress - 0.92) / 0.08
+          );
+
+        if (consolidation > 0) {
+          renderLogoTo(
+            ctx,
+            0,
+            0,
+            easeInOutCubic(consolidation)
+          );
+        }
+      }
+
+      function renderSettle(progress, time) {
+        ctx.clearRect(0, 0, width, height);
+
+        const offset =
+          getStaticOffset(
+            time,
+            1 - progress * 0.25
+          );
+
+        renderLogoTo(
+          ctx,
+          offset.x,
+          offset.y,
+          1
+        );
+      }
+
+      function animate(time) {
+        const total =
+          TIMING.idle +
+          TIMING.glitchSmall +
+          TIMING.glitchLarge +
+          TIMING.transform +
+          TIMING.fall +
+          TIMING.blank +
+          TIMING.rebuild +
+          TIMING.settle;
+
+        let elapsed =
+          time - cycleStart;
+
+        if (elapsed >= total) {
+          window.dispatchEvent(new CustomEvent("kupim:animation-complete"));
+          cycleStart = time;
+          elapsed = 0;
+          buildParticles();
+        }
+
+        if (
+          elapsed <
+          TIMING.idle
+        ) {
+          renderIdle();
+        } else if (
+          elapsed <
+          TIMING.idle +
+            TIMING.glitchSmall
+        ) {
+          renderGlitchSmall(time);
+        } else if (
+          elapsed <
+          TIMING.idle +
+            TIMING.glitchSmall +
+            TIMING.glitchLarge
+        ) {
+          renderGlitchLarge(
+            time,
+            (
+              elapsed -
+              TIMING.idle -
+              TIMING.glitchSmall
+            ) /
+            TIMING.glitchLarge
+          );
+        } else if (
+          elapsed <
+          TIMING.idle +
+            TIMING.glitchSmall +
+            TIMING.glitchLarge +
+            TIMING.transform
+        ) {
+          renderTransform(
+            (
+              elapsed -
+              TIMING.idle -
+              TIMING.glitchSmall -
+              TIMING.glitchLarge
+            ) /
+            TIMING.transform,
+            time
+          );
+        } else if (
+          elapsed <
+          TIMING.idle +
+            TIMING.glitchSmall +
+            TIMING.glitchLarge +
+            TIMING.transform +
+            TIMING.fall
+        ) {
+          renderFall(
+            (
+              elapsed -
+              TIMING.idle -
+              TIMING.glitchSmall -
+              TIMING.glitchLarge -
+              TIMING.transform
+            ) /
+            TIMING.fall
+          );
+        } else if (
+          elapsed <
+          TIMING.idle +
+            TIMING.glitchSmall +
+            TIMING.glitchLarge +
+            TIMING.transform +
+            TIMING.fall +
+            TIMING.blank
+        ) {
+          renderBlank();
+        } else if (
+          elapsed <
+          TIMING.idle +
+            TIMING.glitchSmall +
+            TIMING.glitchLarge +
+            TIMING.transform +
+            TIMING.fall +
+            TIMING.blank +
+            TIMING.rebuild
+        ) {
+          renderRebuild(
+            (
+              elapsed -
+              TIMING.idle -
+              TIMING.glitchSmall -
+              TIMING.glitchLarge -
+              TIMING.transform -
+              TIMING.fall -
+              TIMING.blank
+            ) /
+            TIMING.rebuild
+          );
+        } else {
+          renderSettle(
+            (
+              elapsed -
+              TIMING.idle -
+              TIMING.glitchSmall -
+              TIMING.glitchLarge -
+              TIMING.transform -
+              TIMING.fall -
+              TIMING.blank -
+              TIMING.rebuild
+            ) /
+            TIMING.settle,
+            time
+          );
+        }
+
+        const hoverPhaseAvailable =
+          elapsed < TIMING.idle + TIMING.glitchSmall + TIMING.glitchLarge ||
+          elapsed >= total - TIMING.settle;
+
+        logoHoverTarget.style.pointerEvents = hoverPhaseAvailable ? "auto" : "none";
+
+        if (hoverPhaseAvailable) {
+          renderHoverPulse(time);
+          renderHoverStains(time);
+        } else {
+          hoverStains = [];
+        }
+
+        requestAnimationFrame(animate);
+      }
+
+      let resizeTimer;
+
+      window.addEventListener("resize", () => {
+        clearTimeout(resizeTimer);
+
+        resizeTimer = setTimeout(() => {
+          configureCanvas();
+          cycleStart = performance.now();
+        }, 120);
+      });
+
+      logoHoverTarget.addEventListener("pointerenter", event => {
+        if (preciseHover.matches) {
+          logoIsHovered = true;
+          hoverPulseStart = performance.now();
+          addHoverStain(event, true);
+          document.body.classList.add("logo-is-hovered");
+        }
+      });
+
+      logoHoverTarget.addEventListener("pointermove", event => {
+        if (cubePointers.has(event.pointerId)) {
+          cubePointers.set(event.pointerId, {
+            x: event.clientX,
+            y: event.clientY,
+            type: event.pointerType
+          });
+          updateCubeGesture();
+        }
+
+        if (logoIsHovered) {
+          addHoverStain(event);
+        }
+      });
+
+      logoHoverTarget.addEventListener("pointerdown", event => {
+        if (event.pointerType === "mouse" && event.button !== 0) {
+          return;
+        }
+
+        cubePointers.set(event.pointerId, {
+          x: event.clientX,
+          y: event.clientY,
+          type: event.pointerType
+        });
+
+        try {
+          logoHoverTarget.setPointerCapture(event.pointerId);
+        } catch (error) {
+          // O gesto continua mesmo se a captura não estiver disponível.
+        }
+
+        if (event.pointerType === "touch") {
+          if (cubePointers.size === 2) {
+            beginCubeGesture("touch");
+          }
+        } else {
+          beginCubeGesture(event.pointerType);
+        }
+      });
+
+      function endCubePointer(event) {
+        cubePointers.delete(event.pointerId);
+
+        if (
+          cubeGestureActive &&
+          (event.pointerType !== "touch" || cubePointers.size < 2)
+        ) {
+          finishCubeInteraction();
+        }
+      }
+
+      logoHoverTarget.addEventListener("pointerup", endCubePointer);
+      logoHoverTarget.addEventListener("pointercancel", endCubePointer);
+
+      logoHoverTarget.addEventListener("wheel", event => {
+        event.preventDefault();
+        const unit = event.deltaMode === 1
+          ? 16
+          : event.deltaMode === 2
+            ? Math.max(1, height)
+            : 1;
+
+        cubeGestureActive = true;
+        cubeGestureMoved = true;
+        activateCubeInteraction();
+
+        if (event.ctrlKey) {
+          cubeZoom = clamp(cubeZoom - event.deltaY * unit * 0.0042);
+        } else {
+          cubeRotationX -= event.deltaY * unit * 0.2;
+          cubeRotationY -= event.deltaX * unit * 0.2;
+        }
+
+        suppressLogoClickUntil = performance.now() + 600;
+        updateCubeTransform();
+        window.clearTimeout(cubeWheelTimer);
+        cubeWheelTimer = window.setTimeout(finishCubeInteraction, 180);
+      }, { passive: false });
+
+      logoHoverTarget.addEventListener("pointerleave", () => {
+        logoIsHovered = false;
+        hoverPulseStart = Number.NEGATIVE_INFINITY;
+        document.body.classList.remove("logo-is-hovered");
+      });
+
+      logoHoverTarget.addEventListener("click", () => {
+        if (performance.now() < suppressLogoClickUntil) {
+          return;
+        }
+
+        cycleStart -= CLICK_ADVANCE_MS;
+      });
+
+      preciseHover.addEventListener("change", positionLogoHoverTarget);
+
+      buildCubeParticles();
+      configureCanvas();
+      updateCubeTransform();
+      requestAnimationFrame(animate);
+    })();
+  </script>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const countdownLink = document.querySelector("[data-countdown-link]");
+      const countdownLabel = document.querySelector("[data-countdown-label]");
+      const waitButton = document.querySelector("[data-wait-button]");
+      const actions = document.querySelector("[data-intro-actions]");
+      const countdownDuration = 10000;
+      const countdownEnd = performance.now() + countdownDuration;
+      let waitForAnimation = false;
+      let redirected = false;
+
+      function redirectToPortfolio() {
+        if (redirected) {
+          return;
+        }
+
+        redirected = true;
+        window.location.href = "portfolio.html";
+      }
+
+      function updateCountdown() {
+        const remaining = Math.max(0, countdownEnd - performance.now());
+        const seconds = Math.ceil(remaining / 1000);
+        countdownLabel.textContent = `Portfólio em ${seconds}s`;
+        countdownLink.setAttribute(
+          "aria-label",
+          `Abrir o portfólio agora; redirecionamento automático em ${seconds} segundos`
+        );
+      }
+
+      const countdownInterval = window.setInterval(updateCountdown, 200);
+      const automaticRedirect = window.setTimeout(redirectToPortfolio, countdownDuration);
+
+      waitButton.addEventListener("click", () => {
+        waitForAnimation = true;
+        window.clearInterval(countdownInterval);
+        window.clearTimeout(automaticRedirect);
+        countdownLabel.textContent = "Abrir portfólio agora";
+        countdownLink.setAttribute("aria-label", "Abrir o portfólio agora");
+        waitButton.textContent = "Esperando...";
+        waitButton.setAttribute("aria-pressed", "true");
+      waitButton.disabled = true;
+      actions.classList.add("is-waiting");
+      });
+
+      window.addEventListener("kupim:animation-complete", () => {
+        if (waitForAnimation) {
+          redirectToPortfolio();
+        }
+      });
+
+      updateCountdown();
+    })();
+  </script>
+</body>
+</html>
