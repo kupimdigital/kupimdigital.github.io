@@ -266,4 +266,62 @@ resetChat.addEventListener('click', () => {
   });
 });
 
+const contactOpen = document.querySelector('[data-contact-open]');
+const contactModal = document.querySelector('[data-contact-modal]');
+const contactPanel = document.querySelector('[data-contact-panel]');
+const contactClose = document.querySelector('[data-contact-close]');
+let contactCloseTimer;
+
+function getContactFocusableElements() {
+  return Array.from(contactModal.querySelectorAll('a[href], button:not([disabled])'));
+}
+
+function openContactModal() {
+  window.clearTimeout(contactCloseTimer);
+  contactModal.hidden = false;
+  document.body.classList.add('modal-open');
+
+  window.requestAnimationFrame(() => {
+    contactModal.classList.add('is-open');
+    contactClose.focus();
+  });
+}
+
+function closeContactModal() {
+  contactModal.classList.remove('is-open');
+  document.body.classList.remove('modal-open');
+  contactOpen.focus();
+
+  contactCloseTimer = window.setTimeout(() => {
+    contactModal.hidden = true;
+  }, 180);
+}
+
+contactOpen.addEventListener('click', openContactModal);
+contactClose.addEventListener('click', closeContactModal);
+contactModal.addEventListener('click', event => {
+  if (event.target === contactModal) closeContactModal();
+});
+
+contactPanel.addEventListener('keydown', event => {
+  if (event.key !== 'Tab') return;
+  const focusable = getContactFocusableElements();
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
+});
+
+window.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && contactModal.classList.contains('is-open')) {
+    closeContactModal();
+  }
+});
+
 document.querySelector('[data-year]').textContent = new Date().getFullYear();
