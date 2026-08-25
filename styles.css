@@ -278,10 +278,11 @@ button { font: inherit; }
 
 @media (max-width: 720px) {
   .site-header { height: 68px; }
+  body.menu-open .site-header { color: var(--mobile-menu-header-foreground, var(--ink)); mix-blend-mode: normal; }
   .menu-toggle { display: grid; gap: 6px; width: 42px; height: 42px; place-content: center; padding: 0; border: 1px solid currentColor; border-radius: 50%; background: transparent; color: inherit; }
   .menu-toggle span { display: block; width: 17px; height: 1px; background: currentColor; transition: .25s ease; }
   .menu-toggle[aria-expanded="true"] span:first-child { transform: translateY(3.5px) rotate(45deg); }.menu-toggle[aria-expanded="true"] span:last-child { transform: translateY(-3.5px) rotate(-45deg); }
-  .nav { position: fixed; inset: 0; padding: 100px 28px 42px; background: var(--gold); color: var(--ink); mix-blend-mode: normal; flex-direction: column; align-items: flex-start; justify-content: center; gap: 17px; transform: translateY(-105%); transition: transform .45s cubic-bezier(.7,0,.2,1); }
+  .nav { position: fixed; inset: 0; padding: 100px 28px 42px; background: var(--mobile-menu-background, var(--gold)); color: var(--mobile-menu-foreground, var(--ink)); mix-blend-mode: normal; flex-direction: column; align-items: flex-start; justify-content: center; gap: 17px; transform: translateY(-105%); transition-property: transform, color; transition-duration: .45s, .25s; transition-timing-function: cubic-bezier(.7,0,.2,1), ease-out; }
   .nav.open { transform: none; }.nav a { font-family: var(--display); font-size: 10vw; text-transform: uppercase; }.nav-cta { margin-top: 18px; font-family: var(--body) !important; font-size: 15px !important; }
   .menu-toggle { position: relative; z-index: 2; }.brand { position: relative; z-index: 2; }
   .hero { padding-top: 95px; }.hero-meta span:last-child { display: none; }.hero-title { font-size: clamp(50px, 15.8vw, 72px); line-height: .86; letter-spacing: -.08em; }.hero-title.is-chatbot { font-size: clamp(38px, 10.4vw, 48px); }.hero-title .line-shift { margin-left: 0; }.hero-kicker { margin-bottom: 14px; }
@@ -293,13 +294,25 @@ button { font: inherit; }
   .about-content { padding-left: 22px; padding-right: 22px; }.services > div { grid-template-columns: 35px 1fr; }.services p { grid-column: 2; }
   .contact { min-height: 75vh; }.contact h2 { font-size: 19vw; }.contact-orbit { right: -55%; }.contact-link { font-size: 14px; gap: 16px; }
   .footer { grid-template-columns: 1fr 1fr; gap: 16px; }
-  .contact-modal { padding: 16px; align-items: end; }
-  .contact-modal-panel { padding: 34px 20px 24px; box-shadow: 8px 8px 0 var(--gold); }
-  .contact-modal-panel h2 { margin-top: 32px; font-size: clamp(36px, 12vw, 54px); }
-  .contact-modal-options a { min-height: 68px; grid-template-columns: 1fr 28px; gap: 4px 12px; }
+  .contact-modal { padding: 16px; place-items: center; overflow: hidden; }
+  .contact-modal-panel { width: calc(100% - 8px); max-width: 100%; max-height: calc(100svh - 32px); padding: clamp(20px, 4svh, 34px) 16px clamp(16px, 3svh, 24px); overflow: hidden; box-shadow: 6px 6px 0 var(--gold); }
+  .contact-modal-panel h2 { margin: clamp(20px, 3svh, 32px) 48px 8px 0; font-size: clamp(30px, 10vw, 48px); }
+  .contact-modal-panel > p:not(.eyebrow) { margin-bottom: clamp(14px, 3svh, 26px); }
+  .contact-modal-options { gap: 6px; }
+  .contact-modal-options a { min-width: 0; min-height: clamp(54px, 9svh, 68px); padding: 10px 14px; grid-template-columns: minmax(0, 1fr) 28px; gap: 3px 10px; }
   .contact-modal-options span { grid-column: 1; }
-  .contact-modal-options strong { grid-column: 1; font-size: 13px; }
+  .contact-modal-options strong { grid-column: 1; overflow: hidden; font-size: clamp(11px, 3.5vw, 13px); text-overflow: ellipsis; white-space: nowrap; }
   .contact-modal-options i { grid-column: 2; grid-row: 1 / span 2; }
+}
+
+@media (max-width: 720px) and (max-height: 560px) {
+  .contact-modal-panel { padding: 14px; }
+  .contact-modal-panel > .eyebrow { display: none; }
+  .contact-modal-panel h2 { margin: 0 48px 5px 0; font-size: 28px; }
+  .contact-modal-panel > p:not(.eyebrow) { margin-bottom: 10px; font-size: 13px; }
+  .contact-modal-close { top: 10px; right: 10px; }
+  .contact-modal-options { gap: 4px; }
+  .contact-modal-options a { min-height: 48px; padding-block: 7px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

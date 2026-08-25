@@ -13,8 +13,66 @@ function closeMenu() {
   document.body.classList.remove('menu-open');
 }
 
+const mobileMenuThemes = [
+  { selector: '.hero', background: '#d6a641', foreground: '#171713' },
+  { selector: '.projects', background: '#365cff', foreground: '#fffef8' },
+  { selector: '.lab', background: '#171713', foreground: '#fffef8' },
+  { selector: '.about', background: '#d6a641', foreground: '#171713' },
+  { selector: '.contact', background: '#365cff', foreground: '#fffef8' },
+  { selector: '.footer', background: '#d6a641', foreground: '#171713' }
+];
+
+function getMobileMenuThemeAt(position, bands) {
+  return bands.find(band => position >= band.top && position < band.bottom)?.theme
+    || bands[0]?.theme
+    || mobileMenuThemes[0];
+}
+
+function updateMobileMenuTheme() {
+  const viewportHeight = window.innerHeight;
+  const bands = mobileMenuThemes
+    .map(theme => {
+      const element = document.querySelector(theme.selector);
+      if (!element) return null;
+
+      const rect = element.getBoundingClientRect();
+      if (rect.bottom <= 0 || rect.top >= viewportHeight) return null;
+
+      return {
+        top: Math.max(0, rect.top),
+        bottom: Math.min(viewportHeight, rect.bottom),
+        theme
+      };
+    })
+    .filter(Boolean)
+    .sort((first, second) => first.top - second.top);
+
+  if (!bands.length) return;
+
+  const gradientStops = [];
+  bands.forEach((band, index) => {
+    const top = index === 0 ? 0 : band.top;
+    const bottom = index === bands.length - 1 ? viewportHeight : band.bottom;
+    gradientStops.push(
+      `${band.theme.background} ${top.toFixed(2)}px`,
+      `${band.theme.background} ${bottom.toFixed(2)}px`
+    );
+  });
+
+  const menuTheme = getMobileMenuThemeAt(viewportHeight / 2, bands);
+  const headerTheme = getMobileMenuThemeAt(header.offsetHeight / 2, bands);
+
+  document.body.style.setProperty(
+    '--mobile-menu-background',
+    `linear-gradient(to bottom, ${gradientStops.join(', ')})`
+  );
+  document.body.style.setProperty('--mobile-menu-foreground', menuTheme.foreground);
+  document.body.style.setProperty('--mobile-menu-header-foreground', headerTheme.foreground);
+}
+
 menuToggle.addEventListener('click', () => {
   const open = menuToggle.getAttribute('aria-expanded') === 'true';
+  if (!open) updateMobileMenuTheme();
   menuToggle.setAttribute('aria-expanded', String(!open));
   menuToggle.setAttribute('aria-label', open ? 'Abrir menu' : 'Fechar menu');
   nav.classList.toggle('open', !open);
@@ -23,6 +81,9 @@ menuToggle.addEventListener('click', () => {
 
 nav.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
 window.addEventListener('keydown', event => { if (event.key === 'Escape') closeMenu(); });
+window.addEventListener('resize', () => {
+  if (document.body.classList.contains('menu-open')) updateMobileMenuTheme();
+}, { passive: true });
 
 const revealObserver = new IntersectionObserver((entries) => {
   entries.forEach(entry => {
